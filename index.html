@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>אפליקציית בחירות לחנוכה</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Rubik', sans-serif;
+        }
+
+        :root {
+            --primary: #FF6B35;
+            --secondary: #FFA500;
+            --accent: #004E89;
+            --light: #F8F9FA;
+            --dark: #212529;
+            --success: #4CAF50;
+            --warning: #FFC107;
+            --danger: #DC3545;
+            --gray: #6C757D;
+            --light-gray: #E9ECEF;
+            --border-radius: 12px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #fdfcfb 0%, #f5f7fa 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* Header עם חנוכייה */
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto 25px;
+        }
+
+        .menorah-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 100px;
+            margin: 30px 0;
+            position: relative;
+        }
+
+        .menorah-base {
+            width: 200px;
+            height: 10px;
+            background: linear-gradient(to right, #8B4513, #A0522D, #8B4513);
+            border-radius: 5px;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .menorah-arm {
+            width: 6px;
+            background: linear-gradient(to top, #DAA520, #FFD700, #DAA520);
+            margin: 0 8px;
+            position: relative;
+            border-radius: 3px 3px 0 0;
+        }
+
+        .menorah-arm:nth-child(1) { height: 60px; }
+        .menorah-arm:nth-child(2) { height: 70px; }
+        .menorah-arm:nth-child(3) { height: 80px; }
+        .menorah-arm:nth-child(4) { height: 90px; }
+        .menorah-arm:nth-child(5) { height: 100px; }
+        .menorah-arm:nth-child(6) { height: 90px; }
+        .menorah-arm:nth-child(7) { height: 80px; }
+        .menorah-arm:nth-child(8) { height: 70px; }
+        .menorah-arm:nth-child(9) { height: 60px; }
+
+        .menorah-flame {
+            width: 16px;
+            height: 16px;
+            border-radius: 50% 50% 20% 20%;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #FF8C00, #FF4500);
+            position: absolute;
+            top: -20px;
+            left: -5px;
+            animation: flicker 2s infinite alternate;
+            box-shadow: 0 0 15px rgba(255, 107, 53, 0.7);
+        }
+
+        @keyframes flicker {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        /* טופס הזנת שם */
+        .user-form-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            max-width: 500px;
+            margin: 30px auto;
+            transition: var(--transition);
+        }
+
+        .user-form-container:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .form-title {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--light-gray);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 78, 137, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(to right, var(--gray), #8a8a8a);
+        }
+
+        .message {
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .message-info {
+            background-color: rgba(0, 78, 137, 0.1);
+            color: var(--accent);
+            border-right: 4px solid var(--accent);
+        }
+
+        .message-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #856404;
+            border-right: 4px solid var(--warning);
+        }
+
+        .message-success {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+            border-right: 4px solid var(--success);
+        }
+
+        .message i {
+            margin-left: 10px;
+            font-size: 1.2rem;
+        }
+
+        /* טבלה */
+        .table-container {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            overflow-x: auto;
+            margin-top: 30px;
+            transition: var(--transition);
+        }
+
+        .table-container:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        .table-title {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .hanukkah-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 800px;
+        }
+
+        .hanukkah-table thead th {
+            background: linear-gradient(to bottom, var(--accent), #003A6B);
+            color: white;
+            padding: 18px 12px;
+            font-weight: 600;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .hanukkah-table thead th:first-child {
+            border-top-right-radius: 10px;
+        }
+
+        .hanukkah-table thead th:last-child {
+            border-top-left-radius: 10px;
+        }
+
+        .hanukkah-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .hanukkah-table tbody tr:hover {
+            background-color: rgba(0, 78, 137, 0.03);
+        }
+
+        .hanukkah-table tbody tr.current-user {
+            background-color: rgba(255, 107, 53, 0.05);
+            border-right: 3px solid var(--primary);
+        }
+
+        .hanukkah-table td {
+            padding: 15px 12px;
+            text-align: center;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .hanukkah-table td:first-child {
+            font-weight: 600;
+            color: var(--accent);
+            text-align: right;
+            position: sticky;
+            right: 0;
+            background: white;
+            box-shadow: -5px 0 10px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .hanukkah-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* סטטוס בחירה */
+        .choice-cell {
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .choice-badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            min-width: 120px;
+        }
+
+        .choice-not-selected {
+            background-color: var(--light-gray);
+            color: var(--gray);
+        }
+
+        .choice-cannot {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+
+        .choice-can {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #856404;
+            border: 1px solid rgba(255, 193, 7, 0.2);
+        }
+
+        .choice-prefer {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(76, 175, 80, 0.2);
+        }
+
+        /* כפתורי בחירה */
+        .choice-selector {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 150px;
+        }
+
+        .choice-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .choice-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .choice-btn.cannot {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .choice-btn.can {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #856404;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .choice-btn.prefer {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .choice-btn.selected {
+            font-weight: 700;
+            transform: scale(1.02);
+        }
+
+        .choice-btn.cannot.selected {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .choice-btn.can.selected {
+            background-color: var(--warning);
+            color: black;
+        }
+
+        .choice-btn.prefer.selected {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .choice-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* נעילת עריכה */
+        .locked-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--primary);
+            font-weight: 600;
+            padding: 10px;
+            background-color: rgba(255, 107, 53, 0.05);
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+        }
+
+        /* התאמה למובייל */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .user-form-container {
+                padding: 20px;
+            }
+            
+            .table-container {
+                padding: 10px;
+            }
+            
+            .hanukkah-table thead th,
+            .hanukkah-table td {
+                padding: 12px 8px;
+                font-size: 0.9rem;
+            }
+            
+            .choice-badge {
+                min-width: 100px;
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+            
+            .choice-selector {
+                min-width: 120px;
+            }
+            
+            .choice-btn {
+                padding: 8px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .menorah-arm {
+                margin: 0 4px;
+            }
+            
+            .menorah-arm:nth-child(1) { height: 50px; }
+            .menorah-arm:nth-child(2) { height: 55px; }
+            .menorah-arm:nth-child(3) { height: 60px; }
+            .menorah-arm:nth-child(4) { height: 65px; }
+            .menorah-arm:nth-child(5) { height: 70px; }
+            .menorah-arm:nth-child(6) { height: 65px; }
+            .menorah-arm:nth-child(7) { height: 60px; }
+            .menorah-arm:nth-child(8) { height: 55px; }
+            .menorah-arm:nth-child(9) { height: 50px; }
+        }
+
+        /* אנימציות */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* מצב טעינה */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-gray);
+            border-top: 5px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* מדבקת משתמש נוכחי */
+        .current-user-badge {
+            display: inline-block;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+
+        /* כפתור יציאה */
+        .logout-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            color: var(--accent);
+            border: 2px solid var(--accent);
+            border-radius: 50px;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            z-index: 100;
+        }
+
+        .logout-btn:hover {
+            background: var(--accent);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        /* הוראות */
+        .instructions {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .instructions h3 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .instructions ul {
+            padding-right: 20px;
+            margin-bottom: 15px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header עם חנוכייה -->
+        <header class="header fade-in">
+            <h1>אפליקציית בחירות לחנוכה</h1>
+            <p>בחרו את הימים הנוחים לכם לאירוח במהלך חג החנוכה</p>
+            
+            <div class="menorah-container">
+                <div class="menorah-base"></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+                <div class="menorah-arm"><div class="menorah-flame"></div></div>
+            </div>
+        </header>
+
+        <!-- טופס הזנת שם -->
+        <div id="userFormContainer" class="user-form-container fade-in">
+            <h2 class="form-title">הצטרפות למערכת</h2>
+            <div id="message" class="message message-info" style="display: none;">
+                <i class="fas fa-info-circle"></i>
+                <span id="messageText"></span>
+            </div>
+            
+            <form id="userForm">
+                <div class="form-group">
+                    <label for="userName" class="form-label">הזן את שמך:</label>
+                    <input type="text" id="userName" class="form-input" placeholder="לדוגמה: דוד" required maxlength="20">
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn">
+                    <span id="submitBtnText">הצטרפות</span>
+                    <span id="loadingSpinner" style="display:none;"><i class="fas fa-spinner fa-spin"></i> טוען...</span>
+                </button>
+            </form>
+            
+            <div class="instructions">
+                <h3><i class="fas fa-info-circle"></i> הוראות:</h3>
+                <ul>
+                    <li>לכל משתמש יש 8 ימים של חנוכה לבחירה</li>
+                    <li>לכל יום יש 3 אפשרויות: "אין אפשרות", "יכול", "ממש מעדיף"</li>
+                    <li>ניתן לערוך את הבחירות פעם אחת בלבד - לאחר שמירה המערכת תינעל</li>
+                    <li>לא ניתן ליצור יותר ממשתמש אחד מאותו מכשיר</li>
+                </ul>
+                
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.2);"></div>
+                        <span>אין אפשרות</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.2);"></div>
+                        <span>יכול</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.2);"></div>
+                        <span>ממש מעדיף</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- טבלה -->
+        <div id="tableContainer" class="table-container" style="display: none;">
+            <h2 class="table-title">טבלת בחירות חנוכה - עדכון בזמן אמת</h2>
+            
+            <div id="userInfo" class="message message-success" style="margin-bottom: 20px;">
+                <i class="fas fa-user-check"></i>
+                <span id="userInfoText"></span>
+                <button id="lockBtn" class="btn" style="margin-right: auto; margin-left: 20px; width: auto; padding: 8px 16px;">
+                    נעילת בחירות
+                </button>
+            </div>
+            
+            <div id="tableLoading" class="loading">
+                <div class="spinner"></div>
+                <p>טוען נתונים...</p>
+            </div>
+            
+            <div id="tableContent" style="display: none;">
+                <table class="hanukkah-table">
+                    <thead>
+                        <tr>
+                            <th>שם משתמש</th>
+                            <th>יום 1</th>
+                            <th>יום 2</th>
+                            <th>יום 3</th>
+                            <th>יום 4</th>
+                            <th>יום 5</th>
+                            <th>יום 6</th>
+                            <th>יום 7</th>
+                            <th>יום 8</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- השורות יתווספו כאן באופן דינמי -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="lockedMessage" class="locked-message" style="display: none;">
+                <i class="fas fa-lock"></i>
+                <span>הבחירות שלך נעולות ואינך יכול לשנותן</span>
+            </div>
+        </div>
+
+        <!-- כפתור יציאה -->
+        <div id="logoutBtn" class="logout-btn" style="display: none;" title="יציאה מהמשתמש הנוכחי">
+            <i class="fas fa-sign-out-alt"></i>
+        </div>
+    </div>
+
+    <script>
+        // ==================== הגדרות Firebase ====================
+        // החלפת הפרטים עם הפרטים האמיתיים מפרויקט Firebase שלך
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1hsB6Ucsqap-DQvymQTip9cBwlaMSVKk",
+            authDomain: "hanukkah-table.firebaseapp.com",
+            databaseURL: "https://hanukkah-table-default-rtdb.firebaseio.com",
+            projectId: "hanukkah-table",
+            storageBucket: "hanukkah-table.firebasestorage.app",
+            messagingSenderId: "102548681876",
+            appId: "1:102548681876:web:2c0bc0d481f118e0d2f081",
+            measurementId: "G-4EFPLTFKJY"
+        };
+
+        // אתחול Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // ==================== משתנים גלובליים ====================
+        let currentUser = null;
+        let deviceId = null;
+        let usersData = {};
+        let currentUserName = "";
+
+        // ==================== פונקציות לטיפול במכשיר ====================
+        
+        // יצירת מזהה מכשיר ייחודי
+        function generateDeviceId() {
+            let storedId = localStorage.getItem('hanukkah_device_id');
+            
+            if (!storedId) {
+                // אם אין מזהה קיים, צור אחד חדש
+                storedId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('hanukkah_device_id', storedId);
+            }
+            
+            return storedId;
+        }
+
+        // בדיקה אם כבר יש משתמש למכשיר זה
+        function checkExistingUserForDevice(users, deviceId) {
+            if (!users) return null;
+            
+            for (const userName in users) {
+                if (users[userName].deviceId === deviceId) {
+                    return userName;
+                }
+            }
+            
+            return null;
+        }
+
+        // ==================== פונקציות לטיפול במשתמשים ====================
+        
+        // יצירת משתמש חדש
+        async function createNewUser(userName) {
+            if (!userName || userName.trim() === "") {
+                showMessage("אנא הזן שם משתמש", "warning");
+                return false;
+            }
+            
+            // בדיקה אם שם המשתמש כבר תפוס
+            if (usersData[userName]) {
+                showMessage("שם משתמש זה כבר תפוס. אנא בחר שם אחר", "warning");
+                return false;
+            }
+            
+            // יצירת משתמש חדש
+            const newUser = {
+                deviceId: deviceId,
+                locked: false,
+                day1: "not-selected",
+                day2: "not-selected", 
+                day3: "not-selected",
+                day4: "not-selected",
+                day5: "not-selected",
+                day6: "not-selected",
+                day7: "not-selected",
+                day8: "not-selected",
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                await database.ref('users/' + userName).set(newUser);
+                return true;
+            } catch (error) {
+                console.error("Error creating user:", error);
+                showMessage("אירעה שגיאה ביצירת המשתמש. אנא נסה שוב", "warning");
+                return false;
+            }
+        }
+
+        // עדכון בחירה של משתמש
+        async function updateUserChoice(userName, day, choice) {
+            if (!currentUser || currentUser.locked) {
+                showMessage("לא ניתן לעדכן בחירות לאחר נעילה", "warning");
+                return false;
+            }
+            
+            try {
+                await database.ref('users/' + userName + '/day' + day).set(choice);
+                return true;
+            } catch (error) {
+                console.error("Error updating choice:", error);
+                return false;
+            }
+        }
+
+        // נעילת משתמש
+        async function lockUser(userName) {
+            try {
+                await database.ref('users/' + userName + '/locked').set(true);
+                return true;
+            } catch (error) {
+                console.error("Error locking user:", error);
+                return false;
+            }
+        }
+
+        // ==================== פונקציות לתצוגה ====================
+        
+        // הצגת הודעה
+        function showMessage(text, type = "info") {
+            const messageEl = document.getElementById("message");
+            const messageTextEl = document.getElementById("messageText");
+            
+            messageTextEl.textContent = text;
+            messageEl.className = `message message-${type}`;
+            messageEl.style.display = "flex";
+            
+            // הסתרת ההודעה אחרי 5 שניות (למעט הודעות אזהרה)
+            if (type !== "warning") {
+                setTimeout(() => {
+                    messageEl.style.display = "none";
+                }, 5000);
+            }
+        }
+
+        // החלפת מצב טופס לטבלה
+        function showTable() {
+            document.getElementById("userFormContainer").style.display = "none";
+            document.getElementById("tableContainer").style.display = "block";
+            document.getElementById("logoutBtn").style.display = "flex";
+            document.getElementById("userInfoText").textContent = `אתה מחובר כמשתמש: ${currentUserName}`;
+            
+            // אם המשתמש נעול, הצג הודעת נעילה והסתר כפתור נעילה
+            if (currentUser && currentUser.locked) {
+                document.getElementById("lockBtn").style.display = "none";
+                document.getElementById("lockedMessage").style.display = "flex";
+            }
+            
+            // טען את הטבלה
+            loadTable();
+        }
+
+        // טעינת נתוני הטבלה
+        function loadTable() {
+            const tableBody = document.getElementById("tableBody");
+            tableBody.innerHTML = "";
+            
+            // מיון המשתמשים לפי תאריך יצירה (החדשים ביותר ראשון)
+            const sortedUsers = Object.keys(usersData).sort((a, b) => {
+                const dateA = usersData[a].createdAt ? new Date(usersData[a].createdAt) : new Date(0);
+                const dateB = usersData[b].createdAt ? new Date(usersData[b].createdAt) : new Date(0);
+                return dateB - dateA;
+            });
+            
+            // יצירת שורה עבור כל משתמש
+            sortedUsers.forEach(userName => {
+                const user = usersData[userName];
+                const isCurrentUser = userName === currentUserName;
+                
+                const row = document.createElement("tr");
+                if (isCurrentUser) {
+                    row.className = "current-user";
+                }
+                
+                // עמודת שם המשתמש
+                let nameCell = `<td>${userName}`;
+                if (isCurrentUser) {
+                    nameCell += ` <span class="current-user-badge">אתה</span>`;
+                }
+                if (user.locked) {
+                    nameCell += ` <i class="fas fa-lock" style="color: var(--primary); font-size: 0.8rem; margin-right: 5px;"></i>`;
+                }
+                nameCell += `</td>`;
+                
+                row.innerHTML = nameCell;
+                
+                // עמודות ימים
+                for (let day = 1; day <= 8; day++) {
+                    const dayKey = `day${day}`;
+                    const choice = user[dayKey] || "not-selected";
+                    
+                    const cell = document.createElement("td");
+                    cell.className = "choice-cell";
+                    
+                    if (isCurrentUser && !user.locked) {
+                        // אם זה המשתמש הנוכחי והוא לא נעול, הצג כפתורי בחירה
+                        cell.innerHTML = createChoiceButtons(userName, day, choice);
+                    } else {
+                        // אחרת, הצג את הבחירה כטקסט בלבד
+                        cell.innerHTML = createChoiceBadge(choice);
+                    }
+                    
+                    row.appendChild(cell);
+                }
+                
+                tableBody.appendChild(row);
+            });
+            
+            // הסתרת הטעינה והצגת התוכן
+            document.getElementById("tableLoading").style.display = "none";
+            document.getElementById("tableContent").style.display = "block";
+        }
+
+        // יצירת תגי בחירה
+        function createChoiceBadge(choice) {
+            let text = "עדיין לא נבחר";
+            let className = "choice-badge choice-not-selected";
+            
+            switch(choice) {
+                case "cannot":
+                    text = "אין אפשרות";
+                    className = "choice-badge choice-cannot";
+                    break;
+                case "can":
+                    text = "יכול";
+                    className = "choice-badge choice-can";
+                    break;
+                case "prefer":
+                    text = "ממש מעדיף";
+                    className = "choice-badge choice-prefer";
+                    break;
+            }
+            
+            return `<div class="${className}">${text}</div>`;
+        }
+
+        // יצירת כפתורי בחירה
+        function createChoiceButtons(userName, day, currentChoice) {
+            return `
+                <div class="choice-selector">
+                    <button type="button" class="choice-btn cannot ${currentChoice === 'cannot' ? 'selected' : ''}" 
+                            onclick="selectChoice('${userName}', ${day}, 'cannot')">
+                        אין אפשרות
+                    </button>
+                    <button type="button" class="choice-btn can ${currentChoice === 'can' ? 'selected' : ''}" 
+                            onclick="selectChoice('${userName}', ${day}, 'can')">
+                        יכול
+                    </button>
+                    <button type="button" class="choice-btn prefer ${currentChoice === 'prefer' ? 'selected' : ''}" 
+                            onclick="selectChoice('${userName}', ${day}, 'prefer')">
+                        ממש מעדיף
+                    </button>
+                </div>
+            `;
+        }
+
+        // בחירת אפשרות
+        async function selectChoice(userName, day, choice) {
+            const success = await updateUserChoice(userName, day, choice);
+            if (success) {
+                // עדכון חזותי מיידי
+                const buttons = document.querySelectorAll(`.choice-btn[onclick*="selectChoice('${userName}', ${day},"]`);
+                buttons.forEach(btn => {
+                    btn.classList.remove('selected');
+                    if (btn.classList.contains(choice)) {
+                        btn.classList.add('selected');
+                    }
+                });
+            }
+        }
+
+        // ==================== אתחול האפליקציה ====================
+        
+        // אתחול מזהה מכשיר
+        deviceId = generateDeviceId();
+        
+        // האזנה לשינויים בבסיס הנתונים
+        database.ref('users').on('value', (snapshot) => {
+            usersData = snapshot.val() || {};
+            
+            // בדיקה אם יש כבר משתמש עבור המכשיר הנוכחי
+            const existingUser = checkExistingUserForDevice(usersData, deviceId);
+            
+            if (existingUser) {
+                // אם יש משתמש קיים, הצג את הטבלה ישירות
+                currentUserName = existingUser;
+                currentUser = usersData[existingUser];
+                showTable();
+            }
+            
+            // אם כבר מציגים טבלה, רענן אותה
+            if (document.getElementById("tableContainer").style.display === "block") {
+                loadTable();
+            }
+        });
+
+        // טיפול בהגשת טופס
+        document.getElementById("userForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            
+            const userNameInput = document.getElementById("userName");
+            const userName = userNameInput.value.trim();
+            const submitBtn = document.getElementById("submitBtn");
+            const submitBtnText = document.getElementById("submitBtnText");
+            const loadingSpinner = document.getElementById("loadingSpinner");
+            
+            if (!userName) {
+                showMessage("אנא הזן שם משתמש", "warning");
+                return;
+            }
+            
+            // בדיקה אם שם המשתמש כבר תפוס
+            if (usersData[userName]) {
+                showMessage("שם משתמש זה כבר תפוס. אנא בחר שם אחר", "warning");
+                return;
+            }
+            
+            // הצגת מצב טעינה
+            submitBtnText.style.display = "none";
+            loadingSpinner.style.display = "inline";
+            submitBtn.disabled = true;
+            
+            // יצירת משתמש חדש
+            const success = await createNewUser(userName);
+            
+            // הסתרת מצב טעינה
+            submitBtnText.style.display = "inline";
+            loadingSpinner.style.display = "none";
+            submitBtn.disabled = false;
+            
+            if (success) {
+                currentUserName = userName;
+                currentUser = usersData[userName] || { locked: false };
+                showTable();
+                showMessage("המשתמש נוצר בהצלחה! כעת תוכל לבחור את הימים הנוחים לך", "success");
+            }
+        });
+
+        // טיפול בלחיצה על כפתור נעילה
+        document.getElementById("lockBtn").addEventListener("click", async function() {
+            if (!currentUserName) return;
+            
+            // בדיקה אם יש ימים שלא נבחרו
+            let hasUnselected = false;
+            for (let day = 1; day <= 8; day++) {
+                const dayKey = `day${day}`;
+                if (!currentUser[dayKey] || currentUser[dayKey] === "not-selected") {
+                    hasUnselected = true;
+                    break;
+                }
+            }
+            
+            if (hasUnselected) {
+                const confirmLock = confirm("יש לך ימים שלא בחרת. האם אתה בטוח שברצונך לנעול את הבחירות? לאחר נעילה לא תוכל לשנותן.");
+                if (!confirmLock) return;
+            }
+            
+            const success = await lockUser(currentUserName);
+            if (success) {
+                document.getElementById("lockBtn").style.display = "none";
+                document.getElementById("lockedMessage").style.display = "flex";
+                showMessage("הבחירות שלך ננעלו בהצלחה", "success");
+                
+                // רענון הטבלה כדי להציג את הכפתורים כלא פעילים
+                loadTable();
+            }
+        });
+
+        // טיפול בלחיצה על כפתור יציאה
+        document.getElementById("logoutBtn").addEventListener("click", function() {
+            const confirmLogout = confirm("האם אתה בטוח שברצונך לצאת מהמשתמש הנוכחי?");
+            if (confirmLogout) {
+                // הסרת השם הנוכחי מהזכרון המקומי (אבל שומר את מזהה המכשיר)
+                currentUserName = "";
+                currentUser = null;
+                
+                // חזרה לטופס
+                document.getElementById("tableContainer").style.display = "none";
+                document.getElementById("logoutBtn").style.display = "none";
+                document.getElementById("userFormContainer").style.display = "block";
+                
+                // איפוס הטופס
+                document.getElementById("userName").value = "";
+                
+                showMessage("יצאת מהמשתמש הנוכחי. אתה יכול להזין שם חדש (ממכשיר אחר)", "info");
+            }
+        });
+
+        // פונקציות גלובליות לשימוש ב-HTML
+        window.selectChoice = selectChoice;
+
+        // הצגת הודעה ראשונית
+        setTimeout(() => {
+            showMessage("ברוכים הבאים לאפליקציית בחירות החנוכה! הזן את שמך כדי להתחיל", "info");
+        }, 1000);
+    </script>
+</body>
+</html>
