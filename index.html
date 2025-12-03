@@ -263,8 +263,8 @@
         /* שינוי עיצוב הטבלה לפורמט אנכי */
         .hanukkah-table {
             width: 100%;
-            border-collapse: collapse; /* שונה ל-collapse כדי למנוע כפילויות גבולות */
-            min-width: 300px; /* הוקטן כדי להתאים לנייד */
+            border-collapse: collapse;
+            min-width: 300px;
         }
 
         .hanukkah-table thead th {
@@ -297,7 +297,6 @@
 
         .hanukkah-table tbody tr.current-user {
             background-color: rgba(255, 107, 53, 0.05);
-            /* הגבול בצד ימין הוסר מהשורה, נוסיף אותו לתא השם */
         }
 
         .hanukkah-table td {
@@ -313,7 +312,7 @@
             text-align: right;
             background: white;
             border-left: 2px solid var(--light-gray);
-            vertical-align: top; /* השם יהיה למעלה */
+            vertical-align: top;
             padding-top: 20px;
         }
         
@@ -965,17 +964,17 @@
             const tableBody = document.getElementById("tableBody");
             tableBody.innerHTML = "";
             
-            // מערך שמות הימים ותאריכים לחנוכה 2026 (כסלו-טבת תשפ"ז)
-            // נר ראשון: ערב יום שישי, 4 בדצמבר 2026 (כ"ה כסלו)
+            // מערך שמות הימים ותאריכים לפי בקשתך (החל מ-15/12/2026)
+            // 15/12/2026 זה יום שלישי
             const hanukkahDates = [
-                { day: "יום ב'", date: "15/12/2026", desc: "נר ראשון (יום ג )" },
-                { day:, date: "16/12/2026", desc: "נר שני" },
-                { day: "יום ד'", date: "17/12/2026", desc: "נר שלישי" },
-                { day: "יום ה'", date: "18/12/2026", desc: "נר רביעי" },
-                { day: "יום ו'", date: "19/12/2026", desc: "נר חמישי" },
-                { day: "שבת'", date: "20/12/2026", desc: "נר שישי" },
-                { day: "יום א'", date: "21/12/2026", desc: "נר שביעי" },
-                { day: "יום ב'", date: "22/12/2026", desc: "נר שמיני (זאת חנוכה)" }
+                { day: "יום שלישי", date: "15/12/2026", desc: "נר ראשון" },
+                { day: "יום רביעי", date: "16/12/2026", desc: "נר שני" },
+                { day: "יום חמישי", date: "17/12/2026", desc: "נר שלישי" },
+                { day: "יום שישי", date: "18/12/2026", desc: "נר רביעי" },
+                { day: "שבת", date: "19/12/2026", desc: "נר חמישי" },
+                { day: "יום ראשון", date: "20/12/2026", desc: "נר שישי" },
+                { day: "יום שני", date: "21/12/2026", desc: "נר שביעי" },
+                { day: "יום שלישי", date: "22/12/2026", desc: "נר שמיני" }
             ];
 
             // --- שינוי המיון מתחיל כאן ---
