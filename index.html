@@ -907,26 +907,90 @@
             if (currentUser && currentUser.locked) {
                 document.getElementById("lockBtn").style.display = "none";
                 document.getElementById("lockedMessage").style.display = "flex";
+            } else {
+                 document.getElementById("lockBtn").style.display = "inline";
+                 document.getElementById("lockedMessage").style.display = "none";
             }
             
             // טען את הטבלה
             loadTable();
         }
 
-        // טעינת נתוני הטבלה (גרסה אנכית)
+        // יצירת תגי בחירה
+        function createChoiceBadge(choice) {
+            let text = "עדיין לא נבחר";
+            let className = "choice-badge choice-not-selected";
+            
+            switch(choice) {
+                case "cannot":
+                    text = "אין אפשרות";
+                    className = "choice-badge choice-cannot";
+                    break;
+                case "can":
+                    text = "יכול";
+                    className = "choice-badge choice-can";
+                    break;
+                case "prefer":
+                    text = "ממש מעדיף";
+                    className = "choice-badge choice-prefer";
+                    break;
+            }
+            
+            return `<div class="${className}">${text}</div>`;
+        }
+
+        // יצירת כפתורי בחירה עם הטקסט "אנא בחר אופציה"
+        function createChoiceButtons(userName, day, currentChoice) {
+            return `
+                <div class="choice-selector">
+                    <div class="choice-label">אנא בחר אופציה:</div>
+                    <button type="button" class="choice-btn cannot ${currentChoice === 'cannot' ? 'selected' : ''}" 
+                            onclick="selectChoice('${userName}', ${day}, 'cannot')">
+                        אין אפשרות
+                    </button>
+                    <button type="button" class="choice-btn can ${currentChoice === 'can' ? 'selected' : ''}" 
+                            onclick="selectChoice('${userName}', ${day}, 'can')">
+                        יכול
+                    </button>
+                    <button type="button" class="choice-btn prefer ${currentChoice === 'prefer' ? 'selected' : ''}" 
+                            onclick="selectChoice('${userName}', ${day}, 'prefer')">
+                        ממש מעדיף
+                    </button>
+                </div>
+            `;
+        }
+        
+        // טעינת נתוני הטבלה (גרסה אנכית עם המשתמש הנוכחי תמיד בראש)
         function loadTable() {
             const tableBody = document.getElementById("tableBody");
             tableBody.innerHTML = "";
             
-            // מיון המשתמשים לפי תאריך יצירה (החדשים ביותר ראשון)
-            const sortedUsers = Object.keys(usersData).sort((a, b) => {
+            // --- שינוי המיון מתחיל כאן ---
+            const userNames = Object.keys(usersData);
+            
+            // 1. נחלץ את שם המשתמש הנוכחי
+            const currentUserIndex = userNames.indexOf(currentUserName);
+            if (currentUserIndex > -1) {
+                // נסיר אותו מהמערך
+                userNames.splice(currentUserIndex, 1);
+                // נוסיף אותו ידנית בתחילת הרשימה (כדי שיהיה ראשון)
+                userNames.unshift(currentUserName);
+            }
+            
+            // 2. נמיין את שאר המשתמשים לפי תאריך יצירה (החדשים ביותר ראשון, כפי שהיה קודם)
+            const sortedOtherUsers = userNames.slice(1).sort((a, b) => {
                 const dateA = usersData[a].createdAt ? new Date(usersData[a].createdAt) : new Date(0);
                 const dateB = usersData[b].createdAt ? new Date(usersData[b].createdAt) : new Date(0);
-                return dateB - dateA;
+                return dateB - dateA; 
             });
             
+            // 3. הרשימה הסופית: המשתמש הנוכחי + שאר המשתמשים הממוינים
+            const finalSortedUsers = (currentUserName ? [currentUserName] : []).concat(sortedOtherUsers);
+            // --- שינוי המיון נגמר כאן ---
+
+            
             // יצירת שורות עבור כל משתמש וכל יום
-            sortedUsers.forEach(userName => {
+            finalSortedUsers.forEach(userName => {
                 const user = usersData[userName];
                 const isCurrentUser = userName === currentUserName;
                 
@@ -980,49 +1044,6 @@
             document.getElementById("tableContent").style.display = "block";
         }
 
-        // יצירת תגי בחירה
-        function createChoiceBadge(choice) {
-            let text = "עדיין לא נבחר";
-            let className = "choice-badge choice-not-selected";
-            
-            switch(choice) {
-                case "cannot":
-                    text = "אין אפשרות";
-                    className = "choice-badge choice-cannot";
-                    break;
-                case "can":
-                    text = "יכול";
-                    className = "choice-badge choice-can";
-                    break;
-                case "prefer":
-                    text = "ממש מעדיף";
-                    className = "choice-badge choice-prefer";
-                    break;
-            }
-            
-            return `<div class="${className}">${text}</div>`;
-        }
-
-        // יצירת כפתורי בחירה עם הטקסט "אנא בחר אופציה"
-        function createChoiceButtons(userName, day, currentChoice) {
-            return `
-                <div class="choice-selector">
-                    <div class="choice-label">אנא בחר אופציה:</div>
-                    <button type="button" class="choice-btn cannot ${currentChoice === 'cannot' ? 'selected' : ''}" 
-                            onclick="selectChoice('${userName}', ${day}, 'cannot')">
-                        אין אפשרות
-                    </button>
-                    <button type="button" class="choice-btn can ${currentChoice === 'can' ? 'selected' : ''}" 
-                            onclick="selectChoice('${userName}', ${day}, 'can')">
-                        יכול
-                    </button>
-                    <button type="button" class="choice-btn prefer ${currentChoice === 'prefer' ? 'selected' : ''}" 
-                            onclick="selectChoice('${userName}', ${day}, 'prefer')">
-                        ממש מעדיף
-                    </button>
-                </div>
-            `;
-        }
 
         // בחירת אפשרות
         async function selectChoice(userName, day, choice) {
