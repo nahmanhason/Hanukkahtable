@@ -260,11 +260,11 @@
             text-align: center;
         }
 
+        /* שינוי עיצוב הטבלה לפורמט אנכי */
         .hanukkah-table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            min-width: 800px;
+            border-collapse: collapse; /* שונה ל-collapse כדי למנוע כפילויות גבולות */
+            min-width: 300px; /* הוקטן כדי להתאים לנייד */
         }
 
         .hanukkah-table thead th {
@@ -288,6 +288,7 @@
 
         .hanukkah-table tbody tr {
             transition: var(--transition);
+            border-bottom: 1px solid var(--light-gray);
         }
 
         .hanukkah-table tbody tr:hover {
@@ -296,23 +297,29 @@
 
         .hanukkah-table tbody tr.current-user {
             background-color: rgba(255, 107, 53, 0.05);
-            border-right: 3px solid var(--primary);
+            /* הגבול בצד ימין הוסר מהשורה, נוסיף אותו לתא השם */
         }
 
         .hanukkah-table td {
             padding: 15px 12px;
             text-align: center;
-            border-bottom: 1px solid var(--light-gray);
+            vertical-align: middle;
         }
 
-        .hanukkah-table td:first-child {
+        /* עיצוב מיוחד לתא שם המשתמש שמתפרס על 8 שורות */
+        .hanukkah-table td.user-name-cell {
             font-weight: 600;
             color: var(--accent);
             text-align: right;
-            position: sticky;
-            right: 0;
             background: white;
-            box-shadow: -5px 0 10px -5px rgba(0, 0, 0, 0.05);
+            border-left: 2px solid var(--light-gray);
+            vertical-align: top; /* השם יהיה למעלה */
+            padding-top: 20px;
+        }
+        
+        .current-user .user-name-cell {
+            border-right: 3px solid var(--primary);
+            background-color: rgba(255, 107, 53, 0.05);
         }
 
         .hanukkah-table tbody tr:last-child td {
@@ -365,6 +372,14 @@
             flex-direction: column;
             gap: 8px;
             min-width: 150px;
+        }
+
+        .choice-label {
+            font-size: 0.9rem;
+            color: var(--accent);
+            margin-bottom: 5px;
+            font-weight: 500;
+            text-align: center;
         }
 
         .choice-btn {
@@ -721,14 +736,8 @@
                     <thead>
                         <tr>
                             <th>שם משתמש</th>
-                            <th>יום 1</th>
-                            <th>יום 2</th>
-                            <th>יום 3</th>
-                            <th>יום 4</th>
-                            <th>יום 5</th>
-                            <th>יום 6</th>
-                            <th>יום 7</th>
-                            <th>יום 8</th>
+                            <th>יום</th>
+                            <th>בחירה</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -904,7 +913,7 @@
             loadTable();
         }
 
-        // טעינת נתוני הטבלה
+        // טעינת נתוני הטבלה (גרסה אנכית)
         function loadTable() {
             const tableBody = document.getElementById("tableBody");
             tableBody.innerHTML = "";
@@ -916,48 +925,54 @@
                 return dateB - dateA;
             });
             
-            // יצירת שורה עבור כל משתמש
+            // יצירת שורות עבור כל משתמש וכל יום
             sortedUsers.forEach(userName => {
                 const user = usersData[userName];
                 const isCurrentUser = userName === currentUserName;
                 
-                const row = document.createElement("tr");
-                if (isCurrentUser) {
-                    row.className = "current-user";
-                }
-                
-                // עמודת שם המשתמש
-                let nameCell = `<td>${userName}`;
-                if (isCurrentUser) {
-                    nameCell += ` <span class="current-user-badge">אתה</span>`;
-                }
-                if (user.locked) {
-                    nameCell += ` <i class="fas fa-lock" style="color: var(--primary); font-size: 0.8rem; margin-right: 5px;"></i>`;
-                }
-                nameCell += `</td>`;
-                
-                row.innerHTML = nameCell;
-                
-                // עמודות ימים
+                // לולאה על כל 8 הימים
                 for (let day = 1; day <= 8; day++) {
-                    const dayKey = `day${day}`;
-                    const choice = user[dayKey] || "not-selected";
-                    
-                    const cell = document.createElement("td");
-                    cell.className = "choice-cell";
-                    
-                    if (isCurrentUser && !user.locked) {
-                        // אם זה המשתמש הנוכחי והוא לא נעול, הצג כפתורי בחירה
-                        cell.innerHTML = createChoiceButtons(userName, day, choice);
-                    } else {
-                        // אחרת, הצג את הבחירה כטקסט בלבד
-                        cell.innerHTML = createChoiceBadge(choice);
+                    const row = document.createElement("tr");
+                    if (isCurrentUser) {
+                        row.classList.add("current-user");
+                    }
+
+                    // תא שם המשתמש - נוצר רק בשורה הראשונה ומתפרס על 8 שורות
+                    if (day === 1) {
+                        const nameCell = document.createElement("td");
+                        nameCell.rowSpan = 8;
+                        nameCell.className = "user-name-cell";
+                        
+                        let nameContent = `${userName}`;
+                        if (isCurrentUser) {
+                            nameContent += `<br><span class="current-user-badge">אתה</span>`;
+                        }
+                        if (user.locked) {
+                            nameContent += `<br><i class="fas fa-lock" style="color: var(--primary); font-size: 0.8rem; margin-top: 5px;"></i>`;
+                        }
+                        nameCell.innerHTML = nameContent;
+                        row.appendChild(nameCell);
                     }
                     
-                    row.appendChild(cell);
+                    // תא היום
+                    const dayCell = document.createElement("td");
+                    dayCell.textContent = `יום ${day}`;
+                    row.appendChild(dayCell);
+                    
+                    // תא הבחירה
+                    const choiceCell = document.createElement("td");
+                    choiceCell.className = "choice-cell";
+                    const choice = user[`day${day}`] || "not-selected";
+                    
+                    if (isCurrentUser && !user.locked) {
+                        choiceCell.innerHTML = createChoiceButtons(userName, day, choice);
+                    } else {
+                        choiceCell.innerHTML = createChoiceBadge(choice);
+                    }
+                    
+                    row.appendChild(choiceCell);
+                    tableBody.appendChild(row);
                 }
-                
-                tableBody.appendChild(row);
             });
             
             // הסתרת הטעינה והצגת התוכן
@@ -988,10 +1003,11 @@
             return `<div class="${className}">${text}</div>`;
         }
 
-        // יצירת כפתורי בחירה
+        // יצירת כפתורי בחירה עם הטקסט "אנא בחר אופציה"
         function createChoiceButtons(userName, day, currentChoice) {
             return `
                 <div class="choice-selector">
+                    <div class="choice-label">אנא בחר אופציה:</div>
                     <button type="button" class="choice-btn cannot ${currentChoice === 'cannot' ? 'selected' : ''}" 
                             onclick="selectChoice('${userName}', ${day}, 'cannot')">
                         אין אפשרות
@@ -1150,3 +1166,4 @@
     </script>
 </body>
 </html>
+
