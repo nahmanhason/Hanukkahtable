@@ -965,6 +965,19 @@
             const tableBody = document.getElementById("tableBody");
             tableBody.innerHTML = "";
             
+            // מערך שמות הימים ותאריכים לחנוכה 2026 (כסלו-טבת תשפ"ז)
+            // נר ראשון: ערב יום שישי, 4 בדצמבר 2026 (כ"ה כסלו)
+            const hanukkahDates = [
+                { day: "יום ו'", date: "04/12/2026", desc: "נר ראשון (ערב שבת)" },
+                { day: "שבת", date: "05/12/2026", desc: "נר שני" },
+                { day: "יום א'", date: "06/12/2026", desc: "נר שלישי" },
+                { day: "יום ב'", date: "07/12/2026", desc: "נר רביעי" },
+                { day: "יום ג'", date: "08/12/2026", desc: "נר חמישי" },
+                { day: "יום ד'", date: "09/12/2026", desc: "נר שישי" },
+                { day: "יום ה'", date: "10/12/2026", desc: "נר שביעי" },
+                { day: "יום ו'", date: "11/12/2026", desc: "נר שמיני (זאת חנוכה)" }
+            ];
+
             // --- שינוי המיון מתחיל כאן ---
             const userNames = Object.keys(usersData);
             
@@ -1018,9 +1031,15 @@
                         row.appendChild(nameCell);
                     }
                     
-                    // תא היום
+                    // תא היום והתאריך (משתמשים במערך hanukkahDates)
+                    const dayData = hanukkahDates[day - 1]; // המערך מתחיל ב-0, הימים ב-1
                     const dayCell = document.createElement("td");
-                    dayCell.textContent = `יום ${day}`;
+                    // הוספת מבנה HTML להצגת היום, התאריך והתיאור בצורה יפה
+                    dayCell.innerHTML = `
+                        <div style="font-weight:bold;">${dayData.desc}</div>
+                        <div>${dayData.day}</div>
+                        <div style="font-size: 0.85em; color: var(--gray);">${dayData.date}</div>
+                    `;
                     row.appendChild(dayCell);
                     
                     // תא הבחירה
@@ -1141,40 +1160,93 @@
                 }
             }
             
-            if (hasUnselected) {
-                const confirmLock = confirm("יש לך ימים שלא בחרת. האם אתה בטוח שברצונך לנעול את הבחירות? לאחר נעילה לא תוכל לשנותן.");
-                if (!confirmLock) return;
-            }
-            
-            const success = await lockUser(currentUserName);
-            if (success) {
-                document.getElementById("lockBtn").style.display = "none";
-                document.getElementById("lockedMessage").style.display = "flex";
-                showMessage("הבחירות שלך ננעלו בהצלחה", "success");
+            // שימוש ב-div מותאם אישית במקום confirm
+            const confirmAction = (message, callback) => {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;';
                 
-                // רענון הטבלה כדי להציג את הכפתורים כלא פעילים
-                loadTable();
-            }
+                const content = document.createElement('div');
+                content.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 350px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);';
+                content.innerHTML = `<h3 style="margin-bottom: 20px; color: var(--accent); font-size: 1.2rem;">${message}</h3>`;
+                
+                const yesBtn = document.createElement('button');
+                yesBtn.textContent = 'כן, נעל';
+                yesBtn.className = 'btn';
+                yesBtn.style.cssText = 'width: 120px; margin: 5px;';
+                yesBtn.onclick = () => { document.body.removeChild(modal); callback(true); };
+
+                const noBtn = document.createElement('button');
+                noBtn.textContent = 'ביטול';
+                noBtn.className = 'btn btn-secondary';
+                noBtn.style.cssText = 'width: 120px; margin: 5px; background: var(--gray);';
+                noBtn.onclick = () => { document.body.removeChild(modal); callback(false); };
+
+                content.appendChild(yesBtn);
+                content.appendChild(noBtn);
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+            };
+
+            const message = hasUnselected 
+                ? "יש לך ימים שלא בחרת. האם אתה בטוח שברצונך לנעול את הבחירות? לאחר נעילה לא תוכל לשנותן."
+                : "האם אתה בטוח שברצונך לנעול את הבחירות? לאחר נעילה לא תוכל לשנותן.";
+
+            confirmAction(message, async (shouldLock) => {
+                if (shouldLock) {
+                    const success = await lockUser(currentUserName);
+                    if (success) {
+                        document.getElementById("lockBtn").style.display = "none";
+                        document.getElementById("lockedMessage").style.display = "flex";
+                        showMessage("הבחירות שלך ננעלו בהצלחה", "success");
+                        loadTable();
+                    }
+                }
+            });
         });
 
         // טיפול בלחיצה על כפתור יציאה
         document.getElementById("logoutBtn").addEventListener("click", function() {
-            const confirmLogout = confirm("האם אתה בטוח שברצונך לצאת מהמשתמש הנוכחי?");
-            if (confirmLogout) {
-                // הסרת השם הנוכחי מהזכרון המקומי (אבל שומר את מזהה המכשיר)
-                currentUserName = "";
-                currentUser = null;
+            // שימוש ב-div מותאם אישית במקום confirm
+            const confirmAction = (message, callback) => {
+                 const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;';
                 
-                // חזרה לטופס
-                document.getElementById("tableContainer").style.display = "none";
-                document.getElementById("logoutBtn").style.display = "none";
-                document.getElementById("userFormContainer").style.display = "block";
+                const content = document.createElement('div');
+                content.style.cssText = 'background: white; padding: 30px; border-radius: 12px; max-width: 350px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);';
+                content.innerHTML = `<h3 style="margin-bottom: 20px; color: var(--accent); font-size: 1.2rem;">${message}</h3>`;
                 
-                // איפוס הטופס
-                document.getElementById("userName").value = "";
-                
-                showMessage("יצאת מהמשתמש הנוכחי. אתה יכול להזין שם חדש (ממכשיר אחר)", "info");
-            }
+                const yesBtn = document.createElement('button');
+                yesBtn.textContent = 'כן, יציאה';
+                yesBtn.className = 'btn';
+                yesBtn.style.cssText = 'width: 120px; margin: 5px;';
+                yesBtn.onclick = () => { document.body.removeChild(modal); callback(true); };
+
+                const noBtn = document.createElement('button');
+                noBtn.textContent = 'ביטול';
+                noBtn.className = 'btn btn-secondary';
+                noBtn.style.cssText = 'width: 120px; margin: 5px; background: var(--gray);';
+                noBtn.onclick = () => { document.body.removeChild(modal); callback(false); };
+
+                content.appendChild(yesBtn);
+                content.appendChild(noBtn);
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+            };
+
+            confirmAction("האם אתה בטוח שברצונך לצאת מהמשתמש הנוכחי?", (shouldLogout) => {
+                 if (shouldLogout) {
+                    currentUserName = "";
+                    currentUser = null;
+                    
+                    document.getElementById("tableContainer").style.display = "none";
+                    document.getElementById("logoutBtn").style.display = "none";
+                    document.getElementById("userFormContainer").style.display = "block";
+                    
+                    document.getElementById("userName").value = "";
+                    
+                    showMessage("יצאת מהמשתמש הנוכחי. אתה יכול להזין שם חדש (ממכשיר אחר)", "info");
+                }
+            });
         });
 
         // פונקציות גלובליות לשימוש ב-HTML
